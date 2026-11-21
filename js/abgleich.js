@@ -88,6 +88,19 @@ async function abgleichMacPruefen(still = true) {
 if (SERVER) { window.addEventListener('load', () => setTimeout(() => abgleichMacPruefen(), 1500)); setInterval(abgleichMacPruefen, 30000); }
 
 /* ---------- iPad: Knopf ⇅ in der Kopfzeile ---------- */
+const AB_KEY_STAND = 'schulzentrale_abgleich_stand';   // iPad: Fingerabdruck + Eintrags-IDs beim letzten Sichern/Laden
+const abFinger = st => { const o = {}; Object.keys(st).sort().forEach(k => { if (!AB_GERAET.test(k)) o[k] = st[k]; }); const j = JSON.stringify(o); let h = 0; for (let i = 0; i < j.length; i++) h = (h * 31 + j.charCodeAt(i)) | 0; return h + ':' + j.length; };
+function abStandMerken(st) { try { localStorage.setItem(AB_KEY_STAND, JSON.stringify({ f: abFinger(st), e: (st.eintraege || []).map(e => e.id) })); } catch (e) { /* egal */ } }
+/* ⇅-Knopf: orange + Zahl, wenn am iPad etwas eingetragen und noch nicht gesichert wurde */
+function abKnopfAktualisieren() {
+  const b = document.querySelector('.ab-knopf'); if (!b) return;
+  let st = null; try { st = JSON.parse(localStorage.getItem(AB_KEY_STAND)); } catch (e) { /* keiner */ }
+  const i = abInfo(), alt = !i.geladen || Date.now() - i.geladen > 8 * 3600e3;
+  const geaendert = st && st.f !== abFinger(state), neu = st ? state.eintraege.filter(e => !st.e.includes(e.id)).length : 0;
+  b.classList.toggle('erinnern', alt || geaendert);
+  b.innerHTML = `⇅ <span>${geaendert ? 'Sichern' : 'Abgleich'}</span>${geaendert ? `<b class="ab-zahl">${neu || '!'}</b>` : ''}`;
+  b.title = geaendert ? `Am iPad geändert${neu ? ` (${neu} neue Einträge)` : ''} – noch nicht für den Mac gesichert` : alt ? 'Länger nicht vom Mac geladen' : 'Abgleich mit dem Mac über OneDrive';
+}
 const abInfo = () => { try { return JSON.parse(localStorage.getItem(AB_KEY_INFO)) || {}; } catch (e) { return {}; } };
 const abInfoSetzen = x => { try { localStorage.setItem(AB_KEY_INFO, JSON.stringify({ ...abInfo(), ...x })); } catch (e) { /* egal */ } };
 
@@ -111,7 +124,7 @@ async function abgleichSichern() {
   try {
     if (navigator.canShare && navigator.canShare({ files: [datei] })) await navigator.share({ files: [datei] });
     else { const a = document.createElement('a'); a.href = URL.createObjectURL(datei); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
-    abInfoSetzen({ gesichert: Date.now() }); abgleichDialog(); toast('✓ Stand gesichert – der Mac übernimmt ihn automatisch');
+    abInfoSetzen({ gesichert: Date.now() }); abStandMerken(state); abKnopfAktualisieren(); abgleichDialog(); toast('✓ Stand gesichert – der Mac übernimmt ihn automatisch');
   } catch (e) { if (e.name !== 'AbortError') toast('⚠️ ' + e.message); }
 }
 async function abgleichLaden(file) {
@@ -128,6 +141,7 @@ async function abgleichLaden(file) {
   save();
   try { localStorage.setItem(AB_KEY_BASIS, JSON.stringify(dok.state)); } catch (e) { toast('⚠️ Speicher am iPad voll?'); }
   abInfoSetzen({ geladen: Date.now(), macZeit: dok.zeit });
+  abStandMerken(dok.state);
   try { sessionStorage.setItem('ab_meldung', `✓ Stand vom Mac (${abZeit(dok.zeit)}) geladen`); } catch (e) { /* egal */ }
   location.reload();
 }
@@ -139,10 +153,13 @@ if (!SERVER) {
     b.className = 'notesbtn ab-knopf'; b.title = 'Abgleich mit dem Mac über OneDrive'; b.innerHTML = '⇅ <span>Abgleich</span>';
     b.onclick = abgleichDialog;
     document.querySelector('.topbar [data-open-notes]')?.before(b);
-    // Erinnerung: lange nicht geladen
-    const i = abInfo();
-    if (!i.geladen || Date.now() - i.geladen > 8 * 3600e3) b.classList.add('erinnern');
+    // wer schon vor dieser Version abgeglichen hat: Mac-Stand als Ausgangspunkt nehmen
+    try { if (!localStorage.getItem(AB_KEY_STAND) && localStorage.getItem(AB_KEY_BASIS)) abStandMerken(JSON.parse(localStorage.getItem(AB_KEY_BASIS))); } catch (e) { /* egal */ }
+    abKnopfAktualisieren();
   });
+  // nach jedem Speichern Knopf auffrischen (kurz verzögert, damit Tippen flüssig bleibt)
+  const _saveOrig = save; let _abT = null;
+  save = function () { _saveOrig(); clearTimeout(_abT); _abT = setTimeout(abKnopfAktualisieren, 600); };
   document.addEventListener('click', e => {
     const a = e.target.closest('[data-ab]'); if (!a) return;
     if (a.dataset.ab === 'zu') document.getElementById('abDlg')?.remove();

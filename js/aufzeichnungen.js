@@ -20,6 +20,7 @@ const fmtAvg = a => a == null ? '–' : a.toFixed(1).replace('.', ',');
 function notizBlatt(wer, fertig) {
   const d = document.createElement('div'); d.className = 'nb-dlg';
   d.innerHTML = `<form class="card nb-box"><b>📝 Notiz zu ${esc(wer)}</b><textarea rows="4" placeholder="z.B. sehr guter Beitrag zum Gedicht"></textarea>
+    <small class="muted">✏️ Mit dem Apple Pencil einfach ins Feld schreiben – oder 🎤 auf der Tastatur antippen und diktieren.</small>
     <div class="row"><button type="button" class="btn" data-nb="ab">Abbrechen</button><button class="btn primary">Speichern</button></div></form>`;
   document.body.appendChild(d);
   const ta = d.querySelector('textarea'), zu = v => { d.remove(); fertig(v); };

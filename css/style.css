@@ -1915,3 +1915,25 @@ html.touch button.x { min-width: 36px; min-height: 36px; font-size: 20px; }
   body[data-view="home"] .entry-t { font-size: 30px; margin-top: 22px; white-space: nowrap; }
   body[data-view="home"] .entry-s { font-size: 14px; }
 }
+
+/* ===== Schularbeit: Kind für Kind ===== */
+.sa-ansicht-zeile { margin: 4px 0 -4px; } .sa-ansicht { flex: 0 0 auto; } .sa-ansicht button { flex: 0 0 auto; }
+.sa-kind { display: grid; gap: 16px; max-width: 760px; scroll-margin-top: 70px; }
+.sa-k-kopf { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.sa-k-kopf > .btn { min-width: 46px; font-size: 22px; padding: 4px 12px; }
+.sa-k-kopf #saKindWahl { font-size: 18px; font-weight: 700; flex: 1 1 220px; max-width: 360px; }
+.sa-k-niv { margin-left: auto; }
+.sa-k-felder { display: grid; gap: 12px; }
+.sa-k-block { display: grid; gap: 6px; padding: 12px 14px; border-radius: 14px; background: var(--fill, rgba(0,0,0,.04)); }
+.sa-k-g { display: flex; justify-content: space-between; font-size: 15px; padding-bottom: 4px; border-bottom: 1px solid var(--line); }
+.sa-k-zeile { display: grid; grid-template-columns: 1fr 96px 56px; gap: 10px; align-items: center; }
+.sa-k-name { font-weight: 600; }
+.sa-k-zeile input.pt { width: 96px; min-height: 46px; font-size: 20px; font-weight: 800; text-align: center; }
+.sa-k-zeile input.pt.err { border-color: var(--neg); background: var(--neg-soft); }
+.sa-k-max { font-size: 15px; }
+.sa-k-erg { display: flex; flex-wrap: wrap; gap: 12px 22px; align-items: center; padding-top: 6px; border-top: 1px solid var(--line); }
+.sa-k-erg > div { display: flex; flex-direction: column; } .sa-k-erg small { color: var(--muted); font-size: 12px; }
+.sa-k-erg b { font-size: 24px; min-height: 30px; } .sa-k-erg b .grade { font-size: 20px; }
+.sa-k-erg .btn { margin-left: auto; }
+.ab-knopf { position: relative; }
+.ab-zahl { position: absolute; top: -6px; right: -6px; background: #f5a400; color: #fff; font-size: 12px; min-width: 20px; height: 20px; border-radius: 10px; display: grid; place-items: center; padding: 0 5px; }

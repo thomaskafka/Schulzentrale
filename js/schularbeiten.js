@@ -98,6 +98,23 @@ registerModule({
           ${sa.groups.length ? `<select data-cf="groupId"><option value="">– keine –</option>${sa.groups.map(g => `<option value="${g.id}" ${g.id === c.groupId ? 'selected' : ''}>${esc(g.name || '(ohne Namen)')}</option>`).join('')}</select>` : ''}
           <button class="x" data-delcat title="Kategorie löschen">×</button></div>`;
       const bs = bloecke(), m = saMax(sa);
+      mod._ansicht ||= TOUCH ? 'kind' : 'tabelle';
+      /* Kind für Kind: ein Kind pro Ansicht, alle Kategorien untereinander – praktisch am iPad neben dem Schularbeitsstapel */
+      const kindHtml = () => {
+        const i = Math.max(0, Math.min(mod._kind || 0, kids.length - 1)), s = kids[i]; let n = 0;
+        mod._kind = i;
+        const fertig = kids.filter(x => saErgebnis(sa, x.id)).length, letztes = i === kids.length - 1;
+        return `<section class="card sa-kind" data-s="${s.id}">
+          <div class="sa-k-kopf"><button class="btn" data-kind="${i - 1}" ${i ? '' : 'disabled'} title="Voriges Kind">‹</button>
+            <select id="saKindWahl">${kids.map((x, j) => `<option value="${j}" ${j === i ? 'selected' : ''}>${saErgebnis(sa, x.id) ? '✓ ' : ''}${esc(x.nachname)} ${esc(x.vorname)}</option>`).join('')}</select>
+            <button class="btn" data-kind="${i + 1}" ${letztes ? 'disabled' : ''} title="Nächstes Kind">›</button>
+            <span class="muted small">${i + 1} von ${kids.length} · ${fertig} bewertet</span>
+            ${sa.useLevels ? `<select data-niveau class="sa-k-niv">${Object.entries(NIVEAUS).map(([key, nv]) => `<option value="${key}" ${saNiveau(sa, s.id) === key ? 'selected' : ''}>${nv.name}</option>`).join('')}</select>` : ''}</div>
+          <div class="sa-k-felder">${bs.map(b => `<div class="sa-k-block">${b.g ? `<div class="sa-k-g"><b>${esc(b.g.name || 'Teil')}</b><span><span data-gsum="${b.g.id}"></span> / ${fmtZ(b.cats.reduce((a, c) => a + (zahl(c.max) || 0), 0))}</span></div>` : ''}
+            ${b.cats.map(c => `<label class="sa-k-zeile"><span class="sa-k-name">${esc(c.name || '–')}</span><input class="pt" data-p="${c.id}" data-k="${n++}" value="${esc(fmtZ(zahl(sa.punkte[s.id]?.[c.id])))}" inputmode="decimal" enterkeyhint="next" autocomplete="off"><span class="muted sa-k-max">/ ${fmtZ(zahl(c.max))}</span></label>`).join('')}</div>`).join('')}</div>
+          <div class="sa-k-erg"><div><small>Gesamt</small><b data-sum></b></div><div><small>Prozent</small><b data-pct></b></div><div><small>Note</small><b data-note></b></div>
+            <button class="btn primary big" data-kind="${i + 1}" data-fokus ${letztes ? 'disabled' : ''}>${letztes ? 'Letztes Kind ✓' : 'Nächstes Kind ›'}</button></div></section>`;
+      };
       main.innerHTML = `
         <div class="sa-grid">
           <section class="card">
@@ -126,7 +143,8 @@ registerModule({
                 <tr><td class="left"><span class="grade gr5">5</span> ${NOTEN_TEXT[4]}</td><td class="muted">darunter</td><td></td></tr></table></div>`; }).join('')}</div>
           </section>
         </div>
-        <section class="card nopad scroll">
+        <div class="row sa-ansicht-zeile"><div class="seg sa-ansicht"><button data-saansicht="tabelle" class="${mod._ansicht === 'tabelle' ? 'on' : ''}">▦ Tabelle</button><button data-saansicht="kind" class="${mod._ansicht === 'kind' ? 'on' : ''}">👤 Kind für Kind</button></div></div>
+        ${mod._ansicht === 'kind' && kids.length ? kindHtml() : `        <section class="card nopad scroll">
           <table class="tbl sa-tab">
             <thead><tr><th class="left fix-name" ${sa.groups.length ? 'rowspan="2"' : ''}>Name</th>${sa.useLevels ? `<th ${sa.groups.length ? 'rowspan="2"' : ''}>Niveau</th>` : ''}
               ${bs.map(b => b.g ? `<th class="gh" colspan="${b.cats.length + 1}">${esc(b.g.name || 'Oberkategorie')}</th>` : `<th ${sa.groups.length ? 'rowspan="2"' : ''}>${esc(b.cats[0].name)}<br><span class="muted">/ ${fmtZ(zahl(b.cats[0].max))}</span></th>`).join('')}
@@ -139,14 +157,14 @@ registerModule({
               ${bs.map(b => b.cats.map((c, ci) => `<td><input class="pt" data-p="${c.id}" data-r="${r}" data-c="${bs.flatMap(x => x.cats).indexOf(c)}" value="${esc(fmtZ(zahl(sa.punkte[s.id]?.[c.id])))}" inputmode="decimal" enterkeyhint="next"></td>`).join('') + (b.g ? `<td class="gs" data-gsum="${b.g.id}"></td>` : '')).join('')}
               <td class="sum fix-sum" data-sum></td><td class="muted fix-pct" data-pct></td><td class="fix-note" data-note></td></tr>`).join('') || `<tr><td class="muted">Keine Schüler:innen in diesem Kurs.</td></tr>`}
             </tbody></table>
-        </section>
+        </section>`}
         <p class="muted small">Enter springt zur nächsten Zeile. Kommazahlen mit Komma oder Punkt. Die Noten erscheinen automatisch in der Schülerakte und in der Kursübersicht (Aufzeichnungen).</p>
         <section class="card sa-auswertung"><h2>Auswertung</h2><div class="sa-ausw-grid"><div class="sa-kz" id="saStats"></div><div class="sa-spiegel" id="saSpiegel"></div></div></section>`;
       zeilen(sa);
     };
     const zeilen = sa => {
       const k = aktKlasse(), f = aktFach(k), main = body.querySelector('#saMain'); if (!main) return;
-      main.querySelectorAll('tbody tr[data-s]').forEach(tr => {
+      main.querySelectorAll('tbody tr[data-s], .sa-kind[data-s]').forEach(tr => {
         const sid = tr.dataset.s, e = saErgebnis(sa, sid);
         tr.querySelector('[data-sum]').textContent = e ? `${fmtZ(e.punkte)} / ${fmtZ(e.max)}` : '–';
         tr.querySelector('[data-pct]').textContent = e && e.pct != null ? fmtZ(e.pct, 1) + ' %' : '';
@@ -214,6 +232,8 @@ registerModule({
           <div class="row"><button class="btn primary">Anlegen</button><button type="button" class="btn" id="saNeuAbbr">Abbrechen</button></div></form>`;
         box.querySelector('[name=datum]').focus(); return;
       }
+      const an = t.closest('[data-saansicht]'); if (an) { mod._ansicht = an.dataset.saansicht; draw(); return; }
+      const kd = t.closest('[data-kind]'); if (kd && !kd.disabled) { mod._kind = +kd.dataset.kind; draw(); kindFokus(kd.hasAttribute('data-fokus')); return; }
       if (t.id === 'saNeuAbbr') { body.querySelector('#saNeuBox').innerHTML = ''; return; }
       const s = sa(); if (!s) return;
       if (t.id === 'saDel' && confirm(`${saTitel(s)} mit allen Punkten löschen?`)) { state.schularbeiten = state.schularbeiten.filter(x => x !== s); mod._sa = null; save(); draw(); }
@@ -228,7 +248,7 @@ registerModule({
     });
     el.addEventListener('input', e => {
       const s = sa(), t = e.target; if (!s) return;
-      if (t.dataset.p) { const sid = t.closest('tr').dataset.s; (s.punkte[sid] ||= {})[t.dataset.p] = t.value.trim(); save(); zeilen(s); }
+      if (t.dataset.p) { const sid = t.closest('[data-s]').dataset.s; (s.punkte[sid] ||= {})[t.dataset.p] = t.value.trim(); save(); zeilen(s); }
       if (t.dataset.info) { s[t.dataset.info] = t.value; save(); }
       if (t.dataset.cf === 'name' || t.dataset.cf === 'max') { s.cats.find(c => c.id === t.closest('[data-cat]').dataset.cat)[t.dataset.cf] = t.value; save(); }
       if (t.dataset.gf) { s.groups.find(g => g.id === t.closest('[data-gid]').dataset.gid).name = t.value; save(); }
@@ -255,12 +275,27 @@ registerModule({
       if (!s) return;
       if (t.dataset.cf === 'name' || t.dataset.cf === 'max' || t.dataset.gf || t.dataset.niv || t.dataset.info === 'nr') { draw(); return; } // Kopf & Summen neu
       if (t.dataset.cf === 'groupId') { s.cats.find(c => c.id === t.closest('[data-cat]').dataset.cat).groupId = t.value; save(); draw(); }
-      if (t.dataset.niveau !== undefined) { s.niveau[t.closest('tr').dataset.s] = t.value; save(); zeilen(s); }
+      if (t.dataset.niveau !== undefined) { s.niveau[t.closest('[data-s]').dataset.s] = t.value; save(); zeilen(s); }
+      if (t.id === 'saKindWahl') { mod._kind = +t.value; draw(); kindFokus(); }
       if (t.id === 'saMode') { s.scaleMode = t.value; save(); draw(); }
       if (t.id === 'saLevels') { s.useLevels = t.checked; save(); draw(); }
     });
+    const kindFokus = (feld = true) => {
+      const box = body.querySelector('.sa-kind'); if (!box) return;
+      box.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      if (feld) { const f = box.querySelector('input.pt'); if (f) { f.focus({ preventScroll: true }); f.select(); } }
+    };
     el.addEventListener('keydown', e => {
-      const t = e.target; if (!t.dataset.p || !['Enter', 'ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+      const t = e.target;
+      // Kind für Kind: Enter = nächstes Feld, nach dem letzten Feld zum nächsten Kind
+      if (t.dataset.k != null && t.dataset.p && ['Enter', 'ArrowDown', 'ArrowUp'].includes(e.key)) {
+        e.preventDefault();
+        const n = body.querySelector(`.sa-kind input.pt[data-k="${+t.dataset.k + (e.key === 'ArrowUp' ? -1 : 1)}"]`);
+        if (n) { n.focus(); n.select(); }
+        else if (e.key !== 'ArrowUp') { const k = aktKlasse(); if (mod._kind < kursSchueler(k, aktFach(k)).length - 1) { mod._kind++; draw(); kindFokus(); } else t.blur(); }
+        return;
+      }
+      if (!t.dataset.p || !['Enter', 'ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
       // links/rechts nur am Rand des Eintrags (oder wenn alles markiert ist) – sonst bewegt sich der Cursor im Feld
       const ganz = t.selectionStart === 0 && t.selectionEnd === t.value.length;
       if (e.key === 'ArrowLeft' && !(ganz || t.selectionStart === 0)) return;
