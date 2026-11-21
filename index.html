@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Schulzentrale</title>
+<link rel="apple-touch-icon" href="symbol/Schulzentrale.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Schulzentrale">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%231d1d1f'/%3E%3Cg fill='white' transform='translate(3 3) scale(.75)'%3E%3Cpath d='M7.2 7.2 10 10M16.8 7.2 14 10M7.2 16.8 10 14M16.8 16.8 14 14' stroke='white' stroke-width='1.7' stroke-linecap='round' opacity='.6'/%3E%3Ccircle cx='5.6' cy='5.6' r='2.1'/%3E%3Ccircle cx='18.4' cy='5.6' r='2.1'/%3E%3Ccircle cx='5.6' cy='18.4' r='2.1'/%3E%3Ccircle cx='18.4' cy='18.4' r='2.1'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Patrick+Hand&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script>/* Hell/Dunkel sofort setzen (kein Aufblitzen) */try{var m=localStorage.getItem('schulstart_modus')}catch(e){}document.documentElement.dataset.mode=m||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');</script>
+</head>
+<body>
+<header class="topbar">
+  <a href="#/home" class="brand"><span class="logo"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M7.2 7.2 10 10M16.8 7.2 14 10M7.2 16.8 10 14M16.8 16.8 14 14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" opacity=".6"/><circle cx="5.6" cy="5.6" r="2.1"/><circle cx="18.4" cy="5.6" r="2.1"/><circle cx="5.6" cy="18.4" r="2.1"/><circle cx="18.4" cy="18.4" r="2.1"/><circle cx="12" cy="12" r="3"/></svg></span><span>Schulzentrale</span></a>
+  <span id="crumb" class="crumb"></span>
+  <nav class="topnav" id="topnav"></nav>
+  <button class="notesbtn" data-open-notes title="Meine Notizen / Post-its"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v9l-6 6H5a1 1 0 0 1-1-1z"/><path d="M14 20v-5a1 1 0 0 1 1-1h5"/></svg><span>Notizen</span><b id="notesBadge" hidden></b></button>
+  <span class="tclock" id="tclock"></span>
+  <a class="iconbtn" href="#/einstellungen" title="Einstellungen"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></a>
+  <button class="iconbtn" id="modeBtn" title="Hell / Dunkel umschalten"></button>
+  <button class="iconbtn" id="fsBtn" title="Vollbild (z.B. für den Beamer)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+</header>
+<main id="view"></main>
+
+<script src="js/core.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/schuljahr.js"></script>
+<script src="js/auswertung.js"></script>
+<script src="js/worte.js"></script>
+<script src="js/home.js"></script>
+<script src="js/klassen.js"></script>
+<script src="js/aufzeichnungen.js"></script>
+<script src="js/gruppen.js"></script>
+<script src="js/zufall.js"></script>
+<script src="js/timer.js"></script>
+<script src="js/punkte.js"></script>
+<script src="js/quiz.js"></script>
+<script src="js/quizgen.js"></script>
+<script src="js/material.js"></script>
+<script src="js/brainstorm.js"></script>
+<script src="js/raster.js"></script>
+<script src="js/planung.js"></script>
+<script src="js/stundenplan.js"></script>
+<script src="js/wochen.js"></script>
+<script src="js/einstellungen.js"></script>
+<script src="js/schularbeiten.js"></script>
+<script src="js/akte.js"></script>
+<script src="js/links.js"></script>
+<script src="js/kalender.js"></script>
+<script src="js/auftrag.js"></script>
+<script src="js/wortspiele.js"></script>
+<script src="js/belohnung.js"></script>
+<script src="js/stationen.js"></script>
+<script src="js/qr.js"></script>
+<script src="js/memory.js"></script>
+<script src="js/raetsel.js"></script>
+<script src="js/escape.js"></script>
+<script src="js/hubs.js"></script>
+<script src="js/notizen.js"></script>
+<script src="js/app.js"></script>
+<script src="js/handy.js"></script>
+<script src="js/abgleich.js"></script>
+</body>
+</html>
