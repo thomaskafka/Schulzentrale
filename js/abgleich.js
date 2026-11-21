@@ -99,7 +99,7 @@ function abgleichDialog() {
     <p class="muted small">Über OneDrive, Ordner <b>Schulzentrale-Abgleich</b>. Neue Noten und Mitarbeit von beiden Geräten bleiben erhalten.</p>
     <div class="ab-schritt"><span class="ab-nr">1</span><div><b>Stand vom Mac laden</b><small>Zu Stundenbeginn: Datei <i>Schulzentrale-vom-Mac.json</i> in OneDrive wählen.</small><small class="muted">Zuletzt: ${abZeit(i.geladen)}</small></div>
       <label class="btn primary">Datei wählen<input type="file" accept=".json,application/json" id="abDatei" hidden></label></div>
-    <div class="ab-schritt"><span class="ab-nr">2</span><div><b>Meinen Stand für den Mac sichern</b><small>Nach dem Eintragen: im Teilen-Fenster „In Dateien sichern“ → OneDrive → Schulzentrale-Abgleich, vorhandene Datei <i>ersetzen</i>.</small><small class="muted">Zuletzt: ${abZeit(i.gesichert)}</small></div>
+    <div class="ab-schritt"><span class="ab-nr">2</span><div><b>Meinen Stand für den Mac sichern</b><small>Nach dem Eintragen: im Teilen-Fenster „In Dateien sichern“ → OneDrive → Schulzentrale-Abgleich, vorhandene Datei ersetzen (fragt das iPad nicht, ist es auch gut – der Mac nimmt immer die neueste).</small><small class="muted">Zuletzt: ${abZeit(i.gesichert)}</small></div>
       <button class="btn primary" data-ab="sichern">Sichern</button></div></div>`;
   document.body.appendChild(d);
 }
@@ -109,7 +109,7 @@ async function abgleichSichern() {
   const text = JSON.stringify(abgleichDok('iPad', basis)), name = 'Schulzentrale-vom-iPad.json';
   const datei = new File([text], name, { type: 'application/json' });
   try {
-    if (navigator.canShare && navigator.canShare({ files: [datei] })) await navigator.share({ files: [datei], title: name });
+    if (navigator.canShare && navigator.canShare({ files: [datei] })) await navigator.share({ files: [datei] });
     else { const a = document.createElement('a'); a.href = URL.createObjectURL(datei); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
     abInfoSetzen({ gesichert: Date.now() }); abgleichDialog(); toast('✓ Stand gesichert – der Mac übernimmt ihn automatisch');
   } catch (e) { if (e.name !== 'AbortError') toast('⚠️ ' + e.message); }
