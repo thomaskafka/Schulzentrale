@@ -1905,3 +1905,13 @@ html.touch .tbl td, html.touch .tbl th { padding-top: 6px; padding-bottom: 6px; 
 html.touch .sbtns { grid-template-columns: 1fr 1fr 1.3fr 1.3fr 1fr; }
 html.touch .eb { white-space: nowrap; } html.touch .eb.warn, html.touch .eb.warn2 { font-size: 15px; }
 html.touch button.x { min-width: 36px; min-height: 36px; font-size: 20px; }
+/* Startseite im Hochformat / schmalem Fenster: Symbolreihe nicht unter den Pfeil, Titel einzeilig */
+@media (max-width: 900px) {
+  body[data-view="home"] .entries .entry { min-height: 210px; padding: 22px 24px; }
+  body[data-view="home"] .entry-glyphs { padding-right: 58px; gap: 8px; overflow: hidden; }
+  body[data-view="home"] .entry-glyphs span { width: 40px; height: 40px; flex: 0 0 auto; }
+  body[data-view="home"] .entry-glyphs span:nth-child(n+6) { display: none; }
+  body[data-view="home"] .entry-go { width: 42px; height: 42px; right: 18px; top: 20px; }
+  body[data-view="home"] .entry-t { font-size: 30px; margin-top: 22px; white-space: nowrap; }
+  body[data-view="home"] .entry-s { font-size: 14px; }
+}
