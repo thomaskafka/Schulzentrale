@@ -16,6 +16,17 @@ function notenSchnitt(vals) {
   return n.length ? n.reduce((a, b) => a + b, 0) / n.length : null;
 }
 const fmtAvg = a => a == null ? '–' : a.toFixed(1).replace('.', ',');
+/* Notiz-Eingabe am iPad: großes Feld statt des kleinen Browser-Dialogs */
+function notizBlatt(wer, fertig) {
+  const d = document.createElement('div'); d.className = 'nb-dlg';
+  d.innerHTML = `<form class="card nb-box"><b>📝 Notiz zu ${esc(wer)}</b><textarea rows="4" placeholder="z.B. sehr guter Beitrag zum Gedicht"></textarea>
+    <div class="row"><button type="button" class="btn" data-nb="ab">Abbrechen</button><button class="btn primary">Speichern</button></div></form>`;
+  document.body.appendChild(d);
+  const ta = d.querySelector('textarea'), zu = v => { d.remove(); fertig(v); };
+  setTimeout(() => ta.focus(), 50);
+  d.querySelector('form').onsubmit = e => { e.preventDefault(); zu(ta.value.trim()); };
+  d.onclick = e => { if (e.target === d || e.target.dataset.nb) zu(''); };
+}
 const gradeCls = v => { const n = parseFloat(String(v).replace(',', '.')); return n >= 1 && n <= 5 ? 'gr' + Math.round(n) : ''; };
 
 registerModule({
@@ -62,7 +73,7 @@ registerModule({
       body.innerHTML = `<div class="toolbar">
           <label>Datum <input type="date" id="aDat" value="${datum}"></label>
           <button class="btn" id="aUndo" ${undo.length ? '' : 'disabled'}>↶ Rückgängig</button>
-          <span class="muted small">Tipp: Einen Eintrag (farbiges Kästchen) anklicken, um ihn zu löschen.</span>
+          <span class="muted small">Tipp: Einen Eintrag (farbiges Kästchen) ${TOUCH ? 'antippen' : 'anklicken'}, um ihn zu löschen.</span>
         </div>
         <div class="scards">${sortSchueler(kursSchueler(k, aktFach(k))).map(s => card(k, s)).join('')}</div>`;
     };
@@ -86,7 +97,7 @@ registerModule({
         ${tests.length ? `<div class="scroll card nopad"><table class="tbl grades">
           <thead><tr><th class="left">Name</th>${tests.map(t => `<th><span class="ttyp">${esc(t.typ)}</span><div class="ttl">${esc(t.titel)}</div><div class="muted small">${fmtDate(t.d)}</div><button class="x" data-delT="${t.id}" title="Spalte löschen">×</button></th>`).join('')}<th>Ø</th></tr></thead>
           <tbody>${list.map((s, r) => `<tr><td class="left nowrap">${esc(s.nachname)} ${esc(s.vorname)}</td>
-            ${tests.map((t, c) => `<td><input class="gi ${gradeCls(t.noten[s.id] || '')}" data-t="${t.id}" data-s="${s.id}" data-r="${r}" data-c="${c}" value="${esc(t.noten[s.id] || '')}" maxlength="4"></td>`).join('')}
+            ${tests.map((t, c) => `<td><input class="gi ${gradeCls(t.noten[s.id] || '')}" data-t="${t.id}" data-s="${s.id}" data-r="${r}" data-c="${c}" value="${esc(t.noten[s.id] || '')}" maxlength="4" enterkeyhint="next" autocomplete="off"></td>`).join('')}
             <td class="avg" data-avg="${s.id}">${fmtAvg(notenSchnitt(tests.map(t => t.noten[s.id])))}</td></tr>`).join('')}
             <tr class="foot"><td class="left">Klassen-Ø</td>${tests.map(t => `<td data-tavg="${t.id}">${fmtAvg(notenSchnitt(Object.values(t.noten)))}</td>`).join('')}<td></td></tr>
           </tbody></table></div>
@@ -120,7 +131,7 @@ registerModule({
     const semZelle = (z, druck, r) => {
       const vorschlag = z.v.sem === 1 ? z.v.wert : z.v.wert1;
       if (druck) return z.sn ? notePill(z.sn) : vorschlag != null ? `<span class="muted">≈ ${fmtZ(vorschlag, 1)}</span>` : '–';
-      return `<input class="sn ${gradeCls(z.sn)}" data-sn="${z.s.id}" data-r="${r}" value="${esc(z.sn)}" maxlength="3" placeholder="${vorschlag == null ? '' : '≈' + fmtZ(vorschlag, 1)}" title="Semesternote festlegen (leer = Vorschlag wird verwendet)">`;
+      return `<input class="sn ${gradeCls(z.sn)}" data-sn="${z.s.id}" data-r="${r}" enterkeyhint="next" autocomplete="off" value="${esc(z.sn)}" maxlength="3" placeholder="${vorschlag == null ? '' : '≈' + fmtZ(vorschlag, 1)}" title="Semesternote festlegen (leer = Vorschlag wird verwendet)">`;
     };
     const kursTabelle = (k, druck) => {
       const { sas, zeilen, key, sem } = kursZeilen(k);
@@ -196,14 +207,22 @@ registerModule({
       const add = e.target.closest('[data-add]');
       if (add) {
         const sid = add.closest('.scard').dataset.s, t = add.dataset.add;
-        let n = '';
-        if (t === 'notiz') { n = prompt('Notiz:'); if (!n) return; }
-        const en = { id: uid(), k: k.id, f: aktFach(k).id, s: sid, d: datum, t, n };
-        state.eintraege.push(en); undo.push(en.id); save(); redrawCard(sid);
+        const eintragen = n => {
+          const en = { id: uid(), k: k.id, f: aktFach(k).id, s: sid, d: datum, t, n };
+          state.eintraege.push(en); undo.push(en.id); save(); redrawCard(sid);
+          if (TOUCH) { const sc = body.querySelector(`.scard[data-s="${sid}"]`); sc?.classList.add('blitz'); setTimeout(() => sc?.classList.remove('blitz'), 450); }
+        };
+        if (t === 'notiz') {
+          const s = kursSchueler(k, aktFach(k)).find(x => x.id === sid);
+          if (TOUCH) return notizBlatt(`${s.vorname} ${s.nachname}`, n => n && eintragen(n));
+          const n = prompt('Notiz:'); if (!n) return;
+          eintragen(n);
+        } else eintragen('');
         add.blur(); return;
       }
       const del = e.target.closest('[data-delE]');
       if (del) {
+        if (TOUCH && !confirm(`Eintrag „${del.title.replace(/ – klicken zum Löschen$/, '')}“ löschen?`)) return;
         state.eintraege = state.eintraege.filter(x => x.id !== del.dataset.dele); save();
         const sc = del.closest('.scard'); sc ? redrawCard(sc.dataset.s) : draw(); return;
       }

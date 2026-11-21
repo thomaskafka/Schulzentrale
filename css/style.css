@@ -1852,3 +1852,56 @@ html body .vg-knoepfe .btn.ok, html body .rn .btn.ok { background: #34c759; bord
 .ab-nr { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 900; }
 .ab-schritt .btn { min-height: 46px; padding: 10px 18px; }
 @media (max-width: 560px) { .ab-schritt { grid-template-columns: auto 1fr; } .ab-schritt .btn { grid-column: 1 / -1; } }
+
+/* ===== iPad / Touch (nur auf Geräten mit Finger-Bedienung – am Mac unverändert) ===== */
+html.touch, html.touch * { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+html.touch body { -webkit-text-size-adjust: 100%; }
+/* kein Hineinzoomen beim Antippen: Eingabefelder mind. 16 px Schrift */
+html.touch input, html.touch select, html.touch textarea { font-size: 16px; }
+html.touch input:not([type=checkbox]):not([type=radio]):not([type=range]), html.touch select { min-height: 44px; }
+html.touch .btn { min-height: 44px; padding: 10px 16px; }
+html.touch .btn.small, html.touch .btn.klein { min-height: 38px; }
+html.touch .tabs button { padding: 13px 18px; }
+html.touch .seg button { min-height: 42px; }
+/* Kopfzeile kompakter: ohne Uhr, Vollbild und Schriftzug */
+html.touch .topbar { padding: max(6px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 6px max(12px, env(safe-area-inset-left)); gap: 10px; min-height: 50px; }
+html.touch .topbar .tclock, html.touch #fsBtn, html.touch .brand > span:not(.logo) { display: none; }
+html.touch .iconbtn, html.touch .notesbtn { height: 40px; } html.touch .iconbtn { width: 40px; }
+html.touch .notesbtn span { display: none; } html.touch .ab-knopf span { display: inline; }
+/* keine Hover-Effekte – was sonst erst beim Darüberfahren erscheint, ist immer sichtbar */
+html.touch .kachel:hover, html.touch .home-fav:hover, html.touch .mat-kachel:hover, html.touch .qg-ziel:hover, html.touch .wahl:hover { transform: none; }
+html.touch .kachel .stern { opacity: .5; } html.touch .kachel .stern.an { opacity: 1; }
+html.touch .kachel:active, html.touch .wahl:active, html.touch .home-fav:active { transform: scale(.98); }
+
+/* Schnell-Eintrag Mitarbeit/Notizen */
+html.touch #aBody > .toolbar:first-child { position: sticky; top: 56px; z-index: 20; background: var(--bg); padding: 8px 0; margin: 0 0 6px; }
+html.touch .scards { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+html.touch .scard { padding: 14px 16px; gap: 10px; border-radius: 18px; transition: box-shadow .3s; }
+html.touch .scard.blitz { box-shadow: 0 0 0 3px var(--pos), var(--shadow); }
+html.touch .sname { font-size: 19px; }
+html.touch .sbtns { gap: 7px; }
+html.touch .eb { min-height: 52px; font-size: 17px; border-radius: 12px; }
+html.touch .eb.pos, html.touch .eb.neg { font-size: 26px; }
+html.touch .scard .chips { gap: 6px; min-height: 34px; }
+html.touch .scard .chip { font-size: 14px; padding: 6px 10px; min-height: 32px; border-radius: 9px; }
+html.touch .stot { font-size: 14px; }
+.nb-dlg { position: fixed; inset: 0; z-index: 95; background: rgba(0,0,0,.35); display: grid; place-items: center; padding: 16px; }
+.nb-box { width: min(560px, 100%); display: grid; gap: 12px; } .nb-box b { font-size: 18px; }
+.nb-box textarea { font-size: 17px; } .nb-box .row { justify-content: flex-end; }
+
+/* Noten- und Punkte-Tabellen: größere Felder */
+html.touch .gi { width: 72px !important; min-height: 44px; font-size: 18px; }
+html.touch input.sn { min-height: 42px; font-size: 17px; }
+html.touch input.pt { min-height: 44px; min-width: 58px; font-size: 18px; text-align: center; }
+html.touch .tbl td, html.touch .tbl th { padding-top: 6px; padding-bottom: 6px; }
+
+/* Hochformat (iPad 11": 834 px breit) */
+@media (max-width: 900px) {
+  html.touch .page { padding-left: 14px; padding-right: 14px; }
+  html.touch .scards { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+  html.touch .topnav a { padding: 6px 10px; }
+  html.touch .crumb { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+html.touch .sbtns { grid-template-columns: 1fr 1fr 1.3fr 1.3fr 1fr; }
+html.touch .eb { white-space: nowrap; } html.touch .eb.warn, html.touch .eb.warn2 { font-size: 15px; }
+html.touch button.x { min-width: 36px; min-height: 36px; font-size: 20px; }

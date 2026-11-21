@@ -136,7 +136,7 @@ registerModule({
             <tbody>${kids.map((s, r) => `<tr data-s="${s.id}">
               <td class="left nowrap fix-name"><a href="#/akte" data-akte="${s.id}">${esc(s.nachname)} ${esc(s.vorname)}</a></td>
               ${sa.useLevels ? `<td><select data-niveau>${Object.entries(NIVEAUS).map(([key, n]) => `<option value="${key}" ${saNiveau(sa, s.id) === key ? 'selected' : ''}>${n.kurz}</option>`).join('')}</select></td>` : ''}
-              ${bs.map(b => b.cats.map((c, ci) => `<td><input class="pt" data-p="${c.id}" data-r="${r}" data-c="${bs.flatMap(x => x.cats).indexOf(c)}" value="${esc(fmtZ(zahl(sa.punkte[s.id]?.[c.id])))}" inputmode="decimal"></td>`).join('') + (b.g ? `<td class="gs" data-gsum="${b.g.id}"></td>` : '')).join('')}
+              ${bs.map(b => b.cats.map((c, ci) => `<td><input class="pt" data-p="${c.id}" data-r="${r}" data-c="${bs.flatMap(x => x.cats).indexOf(c)}" value="${esc(fmtZ(zahl(sa.punkte[s.id]?.[c.id])))}" inputmode="decimal" enterkeyhint="next"></td>`).join('') + (b.g ? `<td class="gs" data-gsum="${b.g.id}"></td>` : '')).join('')}
               <td class="sum fix-sum" data-sum></td><td class="muted fix-pct" data-pct></td><td class="fix-note" data-note></td></tr>`).join('') || `<tr><td class="muted">Keine Schüler:innen in diesem Kurs.</td></tr>`}
             </tbody></table>
         </section>

@@ -1,4 +1,8 @@
 'use strict';
+/* Touch-Gerät (iPad): größere Tippflächen, keine Hover-Effekte – die Regeln stehen in style.css unter html.touch */
+const TOUCH = matchMedia('(pointer: coarse)').matches && !matchMedia('(hover: hover)').matches;
+if (TOUCH) document.documentElement.classList.add('touch');
+
 /* ===== Schlichte Linien-Symbole (Organisation) ===== */
 
 const ICONS = {
