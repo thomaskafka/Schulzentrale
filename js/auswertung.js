@@ -15,22 +15,27 @@ const fmtZ = (n, d = 2) => n == null ? '' : (Math.round(n * 10 ** d) / 10 ** d).
 const niveauVon = s => /ahs/i.test(s?.niveau || '') ? 'ahs' : /std|standard/i.test(s?.niveau || '') ? 'std' : 'ahs';
 
 /* ---------- Schularbeiten-Berechnung ---------- */
-const saMax = sa => sa.cats.reduce((a, c) => a + (zahl(c.max) || 0), 0);
+/* LRS: Bei Kindern mit Lese-Rechtschreib-Schwäche (Schüler-Eintrag „lrs“) werden bestimmte Kategorien – standardmäßig „Rechtschreibung“ – nicht gewertet:
+   sie zählen weder bei den Punkten noch beim Höchstwert (Note wird aus dem Rest berechnet). */
+const lrsKat = c => c.lrsAus ?? /rechtschreib/i.test(c.name || '');
+function schuelerPerId(sid) { for (const k of state.klassen) { const s = (k.schueler || []).find(x => x.id === sid); if (s) return s; } return null; }
+const saAus = (sa, sid) => sid && schuelerPerId(sid)?.lrs ? sa.cats.filter(lrsKat).map(c => c.id) : [];
+const saMax = (sa, sid) => { const aus = saAus(sa, sid); return sa.cats.reduce((a, c) => a + (aus.includes(c.id) ? 0 : (zahl(c.max) || 0)), 0); };
 function saSumme(sa, sid, cats = sa.cats) {
-  const p = sa.punkte[sid] || {}; let sum = 0, any = false;
-  for (const c of cats) { const v = zahl(p[c.id]); if (v != null) { sum += v; any = true; } }
+  const p = sa.punkte[sid] || {}, aus = saAus(sa, sid); let sum = 0, any = false;
+  for (const c of cats) { if (aus.includes(c.id)) continue; const v = zahl(p[c.id]); if (v != null) { sum += v; any = true; } }
   return any ? sum : null;
 }
 const saNiveau = (sa, sid) => sa.useLevels ? (sa.niveau[sid] || 'ahs') : 'ahs';
-function saGrenzen(sa, niv) { const m = saMax(sa); return sa.scales[niv].map(v => sa.scaleMode === 'percent' ? (zahl(v) ?? 0) * m / 100 : (zahl(v) ?? 0)); }
+function saGrenzen(sa, niv, sid) { const m = saMax(sa, sid); return sa.scales[niv].map(v => sa.scaleMode === 'percent' ? (zahl(v) ?? 0) * m / 100 : (zahl(v) ?? 0)); }
 function saNote(sa, sid) {
   const t = saSumme(sa, sid); if (t == null) return null;
-  const g = saGrenzen(sa, saNiveau(sa, sid));
+  const g = saGrenzen(sa, saNiveau(sa, sid), sid);
   for (let i = 0; i < 4; i++) if (t >= g[i] - 1e-9) return i + 1;
   return 5;
 }
 function saErgebnis(sa, sid) {
-  const p = saSumme(sa, sid), m = saMax(sa);
+  const p = saSumme(sa, sid), m = saMax(sa, sid);
   return p == null ? null : { punkte: p, max: m, pct: m ? p / m * 100 : null, note: saNote(sa, sid) };
 }
 const saVonKurs = (k, f, sem = null) => state.schularbeiten.filter(x => x.k === k.id && x.f === f.id && (!sem || semVon(x.datum) === sem)).sort((a, b) => (a.datum || '').localeCompare(b.datum || ''));

@@ -130,7 +130,7 @@ const Handy = (() => {
       kurse.push({ id: k.id + '|' + f.id, name: k.name.toLowerCase().includes(f.name.toLowerCase()) ? k.name : `${k.name} · ${f.name}`,
         kids: sortSchueler(kursSchueler(k, f)).map(s => { const c = t => ein.filter(e => e.s === s.id && e.t === t).length; return { id: s.id, n: `${s.vorname} ${s.nachname}`, z: { 'ma+': c('ma+'), 'ma-': c('ma-'), 'hue-': c('hue-'), 'mat-': c('mat-'), notiz: c('notiz') } }; }) });
     }));
-    return { kurse, programme: SPIELE.map(a => ({ hash: a.href, titel: a.title })),
+    return { foto: window.KorrZiel || null, kurse, programme: SPIELE.map(a => ({ hash: a.href, titel: a.title })),
       termine: naechsteTermine(14, 8).map(t => ({ titel: t.titel, wann: `${terminZeit(t)} · ${wannText(t.d)}`, farbe: TKATS[t.kat]?.farbe })),
       notizen: (state.notizen || []).filter(n => !n.erledigt).slice(0, 12).map(n => n.text) };
   };

@@ -74,14 +74,17 @@ registerModule({
       body.innerHTML = `<div class="toolbar">
           ${liste.length ? `<label>Schularbeit <select id="saSel">${liste.map(x => `<option value="${x.id}" ${x.id === sa.id ? 'selected' : ''}>${esc(saTitel(x))} – ${fmtDate(x.datum)}${geplant(x) ? ' (geplant)' : ''}</option>`).join('')}</select></label>` : ''}
           <button class="btn primary" id="saNeu">+ Neue Schularbeit</button>
-          ${sa ? `<button class="btn" id="saXlsx">Excel herunterladen</button><button class="btn" id="saDruckL" title="Ergebnisliste mit Notenspiegel (Querformat)">Ergebnisliste drucken</button><button class="btn" id="saDruckZ" title="Ein Abschnitt pro Kind zum Ausschneiden / Beilegen">Rückmeldezettel</button><button class="btn danger" id="saDel">Löschen</button>` : ''}
+          ${sa && serverOk ? `<button class="btn ${mod._korr ? 'primary' : ''}" id="saKorr" title="Schularbeit fotografieren – Claude markiert Fehler und schlägt Punkte vor"><svg class="claude-ico" viewBox="0 0 16 12" width="20" height="15" aria-hidden="true" shape-rendering="crispEdges"><g fill="#D97757"><rect x="3" y="1" width="10" height="7"/><rect x="1" y="4" width="2" height="2"/><rect x="13" y="4" width="2" height="2"/><rect x="4" y="8" width="1" height="3"/><rect x="6" y="8" width="1" height="3"/><rect x="9" y="8" width="1" height="3"/><rect x="11" y="8" width="1" height="3"/></g><g fill="#2a1f1a"><rect x="5" y="3" width="1" height="2"/><rect x="10" y="3" width="1" height="2"/></g></svg> KI-Korrektur</button>` : ''}${sa ? `<button class="btn" id="saXlsx">Excel herunterladen</button><button class="btn" id="saDruckL" title="Ergebnisliste mit Notenspiegel (Querformat)">Ergebnisliste drucken</button><button class="btn" id="saDruckZ" title="Ein Abschnitt pro Kind zum Ausschneiden / Beilegen">Rückmeldezettel</button><button class="btn danger" id="saDel">Löschen</button>` : ''}
           <label class="btn" title="Datei aus dem bisherigen Programm „Schularbeitspunkte“ übernehmen">Alte Schularbeit übernehmen<input type="file" id="saImp" accept=".xlsx" hidden></label>
         </div>
         <div id="saNeuBox"></div>
+        <div id="saKorrBox"></div>
         ${sa ? (geplant(sa) ? `<div class="card sa-geplant">📅 <b>Geplant für ${new Date(sa.datum + 'T00:00').toLocaleDateString('de-AT', { weekday: 'long', day: 'numeric', month: 'long' })}${sa.zeit ? ', ' + sa.zeit : ''}</b> – steht im <a href="#/kalender">Kalender</a>. Kategorien und Notenschlüssel kannst du schon vorbereiten, Punkte nach der Schularbeit eintragen.</div>` : '')
           : `<div class="card"><p>Für <b>${esc(k.name)} · ${esc(f.name)}</b> gibt es noch keine Schularbeit.</p><p class="muted small">„+ Neue Schularbeit“ legt eine an – im Voraus (geplant) oder nachträglich. Sie erscheint automatisch im Kalender.</p></div>`}
         <div id="saMain"></div>`;
       if (sa) zeichneSA(sa, k, f);
+      el.querySelector('.sa-page')?.classList.toggle('korr-an', !!(sa && mod._korr && serverOk));
+      if (sa && mod._korr && serverOk) Korrektur.zeige(body.querySelector('#saKorrBox'), sa, k, f, draw);
     };
 
     /* ---------- eine Schularbeit ---------- */
@@ -195,7 +198,7 @@ registerModule({
       if (!window.XLSX) await ladeSkript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
       const k = aktKlasse(), f = aktFach(k), kids = sortSchueler(kursSchueler(k, f)), cats = [...sa.groups.flatMap(g => sa.cats.filter(c => c.groupId === g.id)), ...sa.cats.filter(c => !c.groupId)];
       const kopf = ['Nachname', 'Vorname', ...(sa.useLevels ? ['Niveau'] : []), ...cats.map(c => `${c.name} (/${fmtZ(zahl(c.max))})`), 'Gesamt', 'Max.', 'Prozent', 'Note', 'Notentext'];
-      const zeilenX = kids.map(s => { const e = saErgebnis(sa, s.id); return [s.nachname, s.vorname, ...(sa.useLevels ? [NIVEAUS[saNiveau(sa, s.id)].name] : []), ...cats.map(c => zahl(sa.punkte[s.id]?.[c.id])), e?.punkte ?? null, saMax(sa), e?.pct != null ? Math.round(e.pct * 10) / 10 : null, e?.note ?? null, e?.note ? NOTEN_TEXT[e.note - 1] : '']; });
+      const zeilenX = kids.map(s => { const e = saErgebnis(sa, s.id); return [s.nachname, s.vorname, ...(sa.useLevels ? [NIVEAUS[saNiveau(sa, s.id)].name] : []), ...cats.map(c => zahl(sa.punkte[s.id]?.[c.id])), e?.punkte ?? null, e?.max ?? saMax(sa), e?.pct != null ? Math.round(e.pct * 10) / 10 : null, e?.note ?? null, e?.note ? NOTEN_TEXT[e.note - 1] : '']; });
       const ws = XLSX.utils.aoa_to_sheet([[`${k.name} · ${f.name} · ${saTitel(sa)} · ${fmtDate(sa.datum)}`], [], kopf, ...zeilenX]);
       const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Punkte');
       XLSX.writeFile(wb, `SA${sa.nr}_${k.name}_${f.name}.xlsx`.replace(/[\\/:*?"<>|\s]+/g, '_'));
@@ -237,6 +240,7 @@ registerModule({
       if (t.id === 'saNeuAbbr') { body.querySelector('#saNeuBox').innerHTML = ''; return; }
       const s = sa(); if (!s) return;
       if (t.id === 'saDel' && confirm(`${saTitel(s)} mit allen Punkten löschen?`)) { state.schularbeiten = state.schularbeiten.filter(x => x !== s); mod._sa = null; save(); draw(); }
+      if (t.id === 'saKorr') { mod._korr = !mod._korr; draw(); return; }
       if (t.id === 'saXlsx') excel(s).catch(err => toast(err.message));
       if (t.id === 'saDruckL') druckFenster(`${saTitel(s)} ${k.name} ${f.name}`, saDruckListe(s, k, f), { quer: true });
       if (t.id === 'saDruckZ') { if (!kursSchueler(k, f).some(x => saErgebnis(s, x.id))) return toast('Noch keine Punkte eingetragen'); druckFenster(`${saTitel(s)} – Rückmeldungen`, saDruckZettel(s, k, f)); }
